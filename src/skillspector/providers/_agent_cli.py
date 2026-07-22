@@ -210,6 +210,12 @@ def _build_claude_argv(binary: str, model: str, max_output_tokens: int) -> list[
         Use only MCP servers from ``--mcp-config`` — which we never pass — so
         zero MCP servers load. (Note: ``--no-mcp-config`` is NOT a real flag.)
 
+    ``--setting-sources=``
+        Load no user, project, or local settings, preventing their hooks from
+        running in the spawned Claude CLI process. This also means filesystem
+        model settings do not flow into the child unless SkillSpector pins a
+        model explicitly.
+
     ``--disable-slash-commands``
         Prevents skill/plugin invocations from within the sandboxed call.
 
@@ -222,8 +228,8 @@ def _build_claude_argv(binary: str, model: str, max_output_tokens: int) -> list[
     - ``--add-dir`` — no extra directory access needed.
     """
     # Forward --model ONLY when SKILLSPECTOR_MODEL is explicitly set; otherwise
-    # omit it so claude uses the user's own configured default — no pinned model
-    # versions, and the user's model / thinking-level preference is respected.
+    # omit it and let Claude fall back without loading user/project/local
+    # settings from disk.
     model_arg = ["--model", _validate_model_label(model)] if model else []
     return [
         binary,
@@ -236,6 +242,7 @@ def _build_claude_argv(binary: str, model: str, max_output_tokens: int) -> list[
         "--permission-mode",
         "dontAsk",
         "--strict-mcp-config",
+        "--setting-sources=",
         "--disable-slash-commands",
     ]
 
